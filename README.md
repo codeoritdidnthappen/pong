@@ -119,19 +119,23 @@ lie.
 
 **The canvas is painted from the active daisyUI theme.** The ball is `primary`,
 the paddles are `secondary`, the field is `base-100`, the center line is
-`base-content`. A theme whose ball or paddles wash out against its own field is
-unplayable, so only themes clearing a 3:1 contrast ratio ship:
+`base-content`. Every theme ships — all 35 stock daisyUI themes, plus custom
+ones — but a lot of them pick a `primary` or `secondary` that washes out against
+their own field. Rather than exclude those, the canvas corrects at render time:
+any ball or paddle below a 3:1 contrast ratio is repainted in `base-content`,
+which reads against the field on every theme. So the game is playable on all of
+them, and the page chrome still shows each theme's true palette. The pure
+decision lives in [legibility.js](src/render/legibility.js) and is tested in
+[tests/legibility.test.js](tests/legibility.test.js).
 
 ```bash
 node scripts/theme-contrast.mjs
 ```
 
-That script reads daisyUI's own theme definitions and computes the real ratios.
-It rejects 17 of the 35 stock themes — including `retro`, whose ball scores
-1.53:1 against its cream field, and `luxury`, which pairs a brilliant white ball
-with navy paddles you cannot see. Neither stock theme is monochrome anyway, so
-the authentic cabinet ships as two custom themes: **arcade** (white on black,
-the default) and **phosphor** (amber CRT).
+That script reports which themes get corrected and why — 20 of the 44 do,
+including `retro` (ball 1.53:1 on its cream field) and `luxury` (paddles 1.34:1).
+The authentic cabinet ships as two custom themes that need no correction:
+**arcade** (white on black, the default) and **phosphor** (amber CRT).
 
 ## Layout
 

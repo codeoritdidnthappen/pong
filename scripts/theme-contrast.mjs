@@ -1,11 +1,12 @@
 /**
- * Regenerates the daisyUI theme allowlist in src/style.css.
+ * Reports which themes the canvas will auto-correct for legibility.
  *
- * The canvas paints the ball with `primary`, the paddles with `secondary`, the
- * center line with `base-content`, and the field with `base-100`. A theme whose
- * ball or paddles wash out against its own field is unplayable, so it does not
- * ship. This reads daisyUI's own theme definitions and applies the thresholds
- * below, rather than trusting anybody's eye.
+ * The canvas paints the ball with `primary`, the paddles with `secondary`, and
+ * the field with `base-100`. Every theme ships; at render time any ball or
+ * paddle that fails the contrast bar below is repainted in `base-content` (see
+ * src/render/legibility.js). This script is the offline view of that decision —
+ * it doesn't gate anything, it just shows you which themes get corrected and
+ * why, across both stock daisyUI themes and the custom ones in src/style.css.
  *
  *   node scripts/theme-contrast.mjs
  */
@@ -13,21 +14,16 @@ import fs from "node:fs";
 import path from "node:path";
 
 const THEME_DIR = "node_modules/daisyui/theme";
+const STYLE = "src/style.css";
+const THRESHOLD = 3.0; // must match CONTRAST_THRESHOLD in legibility.js
 
-const MIN_BALL = 3.0; // WCAG AA for large graphical objects
-const MIN_PADDLE = 3.0;
-const MIN_LINE = 2.0; // the center line is decorative, so it may be subtler
-
-/** oklch -> sRGB gamma-encoded 0..1, clamped to gamut. */
 function oklchToLinearSrgb(L, C, H) {
   const h = (H * Math.PI) / 180;
   const a = C * Math.cos(h);
   const b = C * Math.sin(h);
-
   const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
   const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
   const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
-
   return [
     4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
     -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
@@ -45,56 +41,57 @@ function contrast(c1, c2) {
 function parseColor(css, name) {
   const decl = css.match(new RegExp(`--color-${name}:\\s*([^;]+);`));
   if (!decl) return null;
-  const ok = decl[1].match(/oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)?/);
+  const ok = decl[1].match(/oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)?/);
   if (!ok) return null;
-  return oklchToLinearSrgb(
-    parseFloat(ok[1]) / 100,
-    parseFloat(ok[2]),
-    parseFloat(ok[3] ?? "0"),
-  );
+  let L = parseFloat(ok[1]);
+  if (ok[2] === "%") L /= 100;
+  else if (L > 1) L /= 100; // some authors write the L as a 0–1 fraction
+  return oklchToLinearSrgb(L, parseFloat(ok[3]), parseFloat(ok[4] ?? "0"));
 }
 
-const results = [];
-for (const file of fs.readdirSync(THEME_DIR).filter((f) => f.endsWith(".css"))) {
-  const theme = path.basename(file, ".css");
-  const css = fs.readFileSync(path.join(THEME_DIR, file), "utf8");
-
+function evaluate(name, kind, css) {
   const field = parseColor(css, "base-100");
   const ball = parseColor(css, "primary");
   const paddle = parseColor(css, "secondary");
-  const line = parseColor(css, "base-content");
-  if (!field || !ball || !paddle || !line) continue;
-
-  results.push({
-    theme,
+  if (!field || !ball || !paddle) return null;
+  return {
+    name,
+    kind,
     ball: contrast(ball, field),
     paddle: contrast(paddle, field),
-    line: contrast(line, field),
-  });
+  };
 }
 
-results.sort((a, b) => b.ball - a.ball);
+const themes = [];
 
-const passes = (r) =>
-  r.ball >= MIN_BALL && r.paddle >= MIN_PADDLE && r.line >= MIN_LINE;
+for (const file of fs.readdirSync(THEME_DIR).filter((f) => f.endsWith(".css"))) {
+  const t = evaluate(path.basename(file, ".css"), "stock", fs.readFileSync(path.join(THEME_DIR, file), "utf8"));
+  if (t) themes.push(t);
+}
 
-const fmt = (r) =>
-  `${r.theme.padEnd(14)} ball ${r.ball.toFixed(2).padStart(6)}   ` +
-  `paddle ${r.paddle.toFixed(2).padStart(6)}   line ${r.line.toFixed(2).padStart(6)}`;
+// Custom @plugin "daisyui/theme" blocks in the stylesheet, comments stripped.
+const style = fs.readFileSync(STYLE, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+const block = /@plugin\s+"daisyui\/theme"\s*\{([\s\S]*?)\}/g;
+let m;
+while ((m = block.exec(style))) {
+  const nm = m[1].match(/name:\s*"([^"]+)"/);
+  if (nm) {
+    const t = evaluate(nm[1], "custom", m[1]);
+    if (t) themes.push(t);
+  }
+}
 
-const kept = results.filter(passes);
-const dropped = results.filter((r) => !passes(r));
+const corrected = themes.filter((t) => t.ball < THRESHOLD || t.paddle < THRESHOLD);
+const fine = themes.filter((t) => t.ball >= THRESHOLD && t.paddle >= THRESHOLD);
 
-console.log(`KEEP (${kept.length})`);
-kept.forEach((r) => console.log("  " + fmt(r)));
-console.log(`\nDROP (${dropped.length})`);
-dropped.forEach((r) => console.log("  " + fmt(r)));
+const fmt = (t) => {
+  const flag = (v) => (v < THRESHOLD ? `${v.toFixed(2)}*` : v.toFixed(2)).padStart(7);
+  return `  ${t.name.padEnd(14)} ${t.kind.padEnd(6)} ball${flag(t.ball)}   paddle${flag(t.paddle)}`;
+};
 
-console.log(
-  "\nPaste into src/style.css:\n\n  themes: " +
-    kept
-      .map((r) => r.theme)
-      .sort()
-      .join(", ") +
-    ";",
-);
+console.log(`Contrast against each theme's own field (base-100). * = below ${THRESHOLD}:1, repainted in base-content.\n`);
+console.log(`AUTO-CORRECTED (${corrected.length}):`);
+corrected.sort((a, b) => Math.min(a.ball, a.paddle) - Math.min(b.ball, b.paddle)).forEach((t) => console.log(fmt(t)));
+console.log(`\nLEGIBLE AS-IS (${fine.length}):`);
+fine.sort((a, b) => a.name.localeCompare(b.name)).forEach((t) => console.log(fmt(t)));
+console.log(`\n${themes.length} themes total.`);

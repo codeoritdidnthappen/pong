@@ -1,3 +1,5 @@
+import { relativeLuminance, correctForField } from "./legibility.js";
+
 /**
  * The canvas takes its colors from whichever daisyUI theme is active, so the
  * field is themed by exactly the same mechanism as the buttons around it.
@@ -6,6 +8,10 @@
  *   paddles-> secondary
  *   line   -> base-content
  *   field  -> base-100
+ *
+ * Every theme ships, including ones whose primary/secondary wash out against
+ * their own field. correctForField (see legibility.js) repaints the ball or
+ * paddles in base-content on those, so the game is playable on all of them.
  */
 const FALLBACK = {
   field: "#000000",
@@ -34,37 +40,54 @@ function usable(ctx, color) {
 }
 
 /**
- * Relative luminance of any CSS color, by asking a 1x1 canvas to paint it and
- * reading the pixel back. The canvas already knows how to parse oklch(); we do
- * not need to.
+ * A 1x1 canvas that parses any CSS color for us — including oklch() — so the
+ * luminance math doesn't need its own colour-space conversion.
  */
 const probe = document.createElement("canvas");
 probe.width = probe.height = 1;
 const probeCtx = probe.getContext("2d", { willReadFrequently: true });
 
-export function luminance(color) {
+function probeRgb(color) {
   probeCtx.fillStyle = "#000000";
   probeCtx.fillStyle = color;
   probeCtx.fillRect(0, 0, 1, 1);
   const [r, g, b] = probeCtx.getImageData(0, 0, 1, 1).data;
-  const linear = (v) => {
-    v /= 255;
-    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-  };
-  return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+  return [r, g, b];
+}
+
+export function luminance(color) {
+  return relativeLuminance(...probeRgb(color));
 }
 
 export function readTheme(ctx) {
   const style = getComputedStyle(document.documentElement);
-  const theme = {};
+  const raw = {};
   for (const [key, variable] of Object.entries(VARS)) {
     const value = style.getPropertyValue(variable).trim();
-    theme[key] = value && usable(ctx, value) ? value : FALLBACK[key];
+    raw[key] = value && usable(ctx, value) ? value : FALLBACK[key];
   }
-  // A CRT overlay tuned for a black tube turns a white field into gray sludge.
-  // Light fields get a far gentler scanline and vignette.
-  theme.light = luminance(theme.field) > 0.5;
-  return theme;
+
+  const fieldLum = luminance(raw.field);
+
+  // Guarantee a visible ball and paddles: substitute base-content for either
+  // one when the theme's primary/secondary can't be seen on the field.
+  const fixed = correctForField({
+    fieldLum,
+    ball: { color: raw.ball, lum: luminance(raw.ball) },
+    paddle: { color: raw.paddle, lum: luminance(raw.paddle) },
+    fallback: { color: raw.line, lum: luminance(raw.line) },
+  });
+
+  return {
+    field: raw.field,
+    line: raw.line,
+    ball: fixed.ball,
+    paddle: fixed.paddle,
+    corrected: fixed.corrected,
+    // A CRT overlay tuned for a black tube turns a white field into gray
+    // sludge, so light fields get a far gentler scanline and vignette.
+    light: fieldLum > 0.5,
+  };
 }
 
 export function applyTheme(name) {
