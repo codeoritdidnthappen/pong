@@ -4,10 +4,48 @@ Browser Pong. Vanilla ES modules on a 2D canvas, themed with daisyUI.
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
-npm test         # the physics and scoring suite
-npm run build    # static output in dist/
+cp .env.example .env    # optional; see below
+npm run dev             # http://localhost:3000 by default
+npm test                # the physics and scoring suite
+npm run build           # static output in dist/
 ```
+
+## Local configuration
+
+The dev server's port is read from a gitignored `.env`. Copy the example and
+edit it if 3000 is taken, or if you just want a port of your own:
+
+```bash
+cp .env.example .env
+```
+
+```ini
+# .env
+PONG_PORT=3000
+```
+
+Set `PONG_PORT=0` to let the OS pick any free port. This affects `npm run dev`
+only; it has no effect on `npm run build`, and nothing in `.env` reaches the
+browser, because the name has no `VITE_` prefix and so is never inlined into the
+client bundle. [vite.config.js](vite.config.js) reads it explicitly with
+`loadEnv(mode, process.cwd(), '')`, whose empty third argument is what makes
+unprefixed variables visible to the config — see
+[Using Environment Variables in Config](https://vite.dev/config/#using-environment-variables-in-config).
+
+It is `PONG_PORT` and not `PORT` on purpose. That empty prefix also merges the
+entire ambient environment over your `.env` file, and a stray `export PORT=8080`
+from some other project would silently win.
+
+Give it a value that isn't a number and Vite discards it and starts on **5173**,
+its own default, without complaint. So if the server comes up somewhere you did
+not expect, check `.env` for a typo before anything else.
+
+The server runs with `strictPort`, so an occupied port is a loud failure rather
+than a silent hop to the next one. A silently moved port leaves your bookmarks —
+and `.claude/launch.json` — pointing at a server that isn't there. If you change
+`PONG_PORT`, update the `port` in `.claude/launch.json` to match; that file is
+committed, because it is how the browser tooling starts the dev server, and it
+cannot read `.env`.
 
 ## Playing
 
