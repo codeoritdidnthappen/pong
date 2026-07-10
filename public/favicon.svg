@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    Pong, in miniature: one paddle and a ball, square-cornered to match the
+    arcade cabinet. Transparent background; the ink flips with the tab's colour
+    scheme so it reads on both light and dark tab strips. Clients that ignore
+    prefers-color-scheme fall back to the dark default below.
+  -->
+  <style>
+    rect { fill: #111111; }
+    @media (prefers-color-scheme: dark) {
+      rect { fill: #ffffff; }
+    }
+  </style>
+  <rect x="4" y="7" width="4" height="18" />
+  <rect x="19" y="13" width="6" height="6" />
+</svg>
