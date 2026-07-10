@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/* Only themes whose primary (ball) and secondary (paddles) clear a 3.0:1 WCAG
+   contrast ratio against base-100 (the field) are listed here. See
+   scripts/theme-contrast.mjs, which regenerates this list. */
+@plugin "daisyui" {
+  themes: abyss, autumn, caramellatte, corporate, dark, dim, dracula, fantasy,
+    forest, garden, light, lofi, night, silk, sunset, synthwave, valentine,
+    winter;
+}
+
+/* No stock daisyUI theme is actually monochrome, and the one named "retro"
+   has the worst contrast of all 35. So the authentic cabinet is a custom theme. */
+@plugin "daisyui/theme" {
+  name: "arcade";
+  default: true;
+  color-scheme: dark;
+  --color-base-100: oklch(0% 0 0);
+  --color-base-200: oklch(15% 0 0);
+  --color-base-300: oklch(24% 0 0);
+  --color-base-content: oklch(100% 0 0);
+  --color-primary: oklch(100% 0 0);
+  --color-primary-content: oklch(0% 0 0);
+  --color-secondary: oklch(100% 0 0);
+  --color-secondary-content: oklch(0% 0 0);
+  --color-accent: oklch(100% 0 0);
+  --color-accent-content: oklch(0% 0 0);
+  --color-neutral: oklch(20% 0 0);
+  --color-neutral-content: oklch(100% 0 0);
+  --color-info: oklch(100% 0 0);
+  --color-info-content: oklch(0% 0 0);
+  --color-success: oklch(100% 0 0);
+  --color-success-content: oklch(0% 0 0);
+  --color-warning: oklch(100% 0 0);
+  --color-warning-content: oklch(0% 0 0);
+  --color-error: oklch(100% 0 0);
+  --color-error-content: oklch(0% 0 0);
+  --radius-selector: 0;
+  --radius-field: 0;
+  --radius-box: 0;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 2px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* An amber CRT. Same monochrome discipline, warmer tube. */
+@plugin "daisyui/theme" {
+  name: "phosphor";
+  color-scheme: dark;
+  --color-base-100: oklch(13% 0.012 80);
+  --color-base-200: oklch(18% 0.016 80);
+  --color-base-300: oklch(24% 0.02 80);
+  --color-base-content: oklch(84% 0.145 82);
+  --color-primary: oklch(86% 0.15 82);
+  --color-primary-content: oklch(13% 0.012 80);
+  --color-secondary: oklch(76% 0.13 82);
+  --color-secondary-content: oklch(13% 0.012 80);
+  --color-accent: oklch(86% 0.15 82);
+  --color-accent-content: oklch(13% 0.012 80);
+  --color-neutral: oklch(24% 0.02 80);
+  --color-neutral-content: oklch(84% 0.145 82);
+  --color-info: oklch(84% 0.145 82);
+  --color-info-content: oklch(13% 0.012 80);
+  --color-success: oklch(84% 0.145 82);
+  --color-success-content: oklch(13% 0.012 80);
+  --color-warning: oklch(84% 0.145 82);
+  --color-warning-content: oklch(13% 0.012 80);
+  --color-error: oklch(70% 0.16 30);
+  --color-error-content: oklch(13% 0.012 80);
+  --radius-selector: 0;
+  --radius-field: 0;
+  --radius-box: 0;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 2px;
+  --depth: 0;
+  --noise: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+/* The field is drawn, not laid out. Never let the browser smooth it. */
+#field {
+  image-rendering: pixelated;
+  touch-action: none;
+}

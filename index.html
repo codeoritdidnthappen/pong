@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-theme="arcade">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pong</title>
+    <link rel="icon" href="data:," />
+  </head>
+  <body class="bg-base-200 text-base-content">
+    <div class="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
+      <header class="flex w-full max-w-5xl flex-wrap items-center justify-between gap-2">
+        <h1 class="text-xl font-bold tracking-[0.4em] uppercase select-none">Pong</h1>
+
+        <div class="flex items-center gap-2">
+          <select
+            id="theme"
+            class="select select-sm select-bordered w-40"
+            aria-label="Theme"
+          ></select>
+          <button
+            id="mute"
+            class="btn btn-sm btn-square"
+            aria-label="Toggle sound"
+            aria-pressed="false"
+          >
+            <span id="mute-icon" aria-hidden="true">🔊</span>
+          </button>
+        </div>
+      </header>
+
+      <div
+        id="stage"
+        class="relative w-full max-w-5xl overflow-hidden border-2 border-base-content/25 bg-base-100"
+        style="aspect-ratio: 960 / 600"
+      >
+        <canvas id="field" class="block h-full w-full"></canvas>
+
+        <div
+          id="overlay"
+          class="absolute inset-0 grid place-items-center bg-base-100/75 p-4 backdrop-blur-[2px]"
+        ></div>
+      </div>
+
+      <footer class="max-w-5xl text-center text-xs opacity-60">
+        <span id="hint">
+          Left paddle <kbd class="kbd kbd-xs">W</kbd> <kbd class="kbd kbd-xs">S</kbd>
+          &nbsp;·&nbsp; Right paddle
+          <kbd class="kbd kbd-xs">↑</kbd> <kbd class="kbd kbd-xs">↓</kbd>
+          &nbsp;·&nbsp; <kbd class="kbd kbd-xs">Esc</kbd> pause
+          &nbsp;·&nbsp; <kbd class="kbd kbd-xs">M</kbd> mute
+        </span>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
