@@ -47,6 +47,26 @@ and `.claude/launch.json` — pointing at a server that isn't there. If you chan
 committed, because it is how the browser tooling starts the dev server, and it
 cannot read `.env`.
 
+## Deployment
+
+Hosted on Vercel at **https://pong.daviddean.dev** as its own project, connected
+to this GitHub repo:
+
+- A merge to `main` deploys production; every branch and PR gets its own preview
+  URL, so a change can be reviewed on a real deployed page before it merges.
+- The build command is `npm test && npm run build` (in [vercel.json](vercel.json)),
+  so a failing suite blocks the deploy — neither a preview nor production can
+  ship red.
+- Fingerprinted assets under `/assets/` are cached for a year and immutable;
+  `index.html` is never cached, so a new deploy is picked up immediately.
+
+The build needs no environment variables: `PONG_PORT` configures the local dev
+server only and is irrelevant to the production build.
+
+DNS for `daviddean.dev` is managed by Vercel (the nameservers point at
+`vercel-dns.com`), so the `pong` subdomain is added inside Vercel and needs no
+change at the domain registrar.
+
 ## Playing
 
 | | |
