@@ -51,30 +51,60 @@ export const MODES = {
 };
 
 /**
- * Contrast-verified against each theme's own base-100. Regenerate with
- * `node scripts/theme-contrast.mjs` and keep in sync with src/style.css.
+ * Every theme is selectable; the canvas guarantees legibility at render time
+ * (see src/render/legibility.js), so there is no contrast gate on this list.
+ * Order: the two signature cabinets, then the custom themes, then every stock
+ * daisyUI theme alphabetically. Keep in sync with the `themes:` list and the
+ * custom @plugin blocks in src/style.css.
  */
 export const THEMES = [
+  // Signature
   "arcade",
   "phosphor",
+  // Custom
+  "chill",
+  "validmonkey",
+  "mysteryhouse",
+  "garmentcoffee",
+  "icehouse",
+  "demonflip",
+  "adcrr",
+  // Stock daisyUI
   "abyss",
+  "acid",
+  "aqua",
   "autumn",
+  "black",
+  "bumblebee",
+  "business",
   "caramellatte",
+  "cmyk",
+  "coffee",
   "corporate",
+  "cupcake",
+  "cyberpunk",
   "dark",
   "dim",
   "dracula",
+  "emerald",
   "fantasy",
   "forest",
   "garden",
+  "halloween",
+  "lemonade",
   "light",
   "lofi",
+  "luxury",
   "night",
+  "nord",
+  "pastel",
+  "retro",
   "silk",
   "sunset",
   "synthwave",
   "valentine",
   "winter",
+  "wireframe",
 ];
 
 export const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
